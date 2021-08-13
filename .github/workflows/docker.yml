@@ -21,8 +21,8 @@ jobs:
       matrix:
         os:
           - alpine
-          - debian
-          - ubuntu
+          # - debian
+          # - ubuntu
       fail-fast: false
 
     steps:
@@ -38,7 +38,6 @@ jobs:
           # images: ${DOCKERHUB_REPOSITORY}
           images: mmacata/grass-py3-pdal
           tags: |
-            # type=ref,event=tag
             1.2.3
           flavor: |
             latest=false
