@@ -1,0 +1,74 @@
+name: Docker
+
+on:
+  push:
+    branches: [gha-docker]
+    tags: ['*.*.*']
+  release:
+    types: [published, created]
+
+env:
+    # Additionally mentioned in docker-sha-release-latest
+    # as use of variable fails there
+    DOCKERHUB_REPOSITORY: mmacata/grass-py3-pdal
+
+jobs:
+
+  docker-release-os-matrix:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - alpine
+          - debian
+          - ubuntu
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Create image and tag names
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          # images: ${DOCKERHUB_REPOSITORY}
+          images: mmacata/grass-py3-pdal
+          tags: |
+            # type=ref,event=tag
+            1.2.3
+          flavor: |
+            latest=false
+
+      - id: meta
+        name: Create tag name
+        run: |
+          tag="${DOCKERHUB_REPOSITORY}:${{ steps.meta.outputs.tags }}-${{ matrix.os }}"
+          echo "::set-output name=tags::$tag"
+
+      - name: log
+        run: |
+          echo ${{ steps.meta.outputs.tags }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN  }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: false
+          pull: true
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          file: docker/${{ matrix.os }}/Dockerfile
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
