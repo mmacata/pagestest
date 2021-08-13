@@ -45,7 +45,7 @@ jobs:
       - id: meta2
         name: Create tag name
         run: |
-          tag="${DOCKERHUB_REPOSITORY}:${{ steps.meta.outputs.tags }}-${{ matrix.os }}"
+          tag="${{ steps.meta.outputs.tags }}-${{ matrix.os }}"
           echo "::set-output name=tags::$tag"
 
       - name: log
